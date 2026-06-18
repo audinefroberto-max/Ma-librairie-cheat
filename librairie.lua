@@ -290,9 +290,9 @@ function SoroniceLib:CreateWindow(Config)
     -- sur GitHub. Format raw :
     --   https://raw.githubusercontent.com/COMPTE/REPO/main/FichierX.lua
     -- ============================================================
-    local BUTTONS_URL  = "https://raw.githubusercontent.com/TON_COMPTE/TON_REPO/main/SoroniceLib_Buttons.lua"
-    local ICONCARD_URL = "https://raw.githubusercontent.com/TON_COMPTE/TON_REPO/main/SoroniceLib_IconCard.lua"
-    local SETTINGS_URL = "https://raw.githubusercontent.com/TON_COMPTE/TON_REPO/main/SoroniceLib_Settings.lua"
+    local BUTTONS_URL  = "https://raw.githubusercontent.com/audinefroberto-max/Ma-librairie-cheat/refs/heads/main/Soronicelib%20buttons.lua"
+    local ICONCARD_URL = "https://raw.githubusercontent.com/audinefroberto-max/Ma-librairie-cheat/refs/heads/main/Soronicelib%20iconcard.lua"
+    local SETTINGS_URL = "https://raw.githubusercontent.com/audinefroberto-max/Ma-librairie-cheat/refs/heads/main/Soronicelib%20settings.lua"
 
     -- antiAfkActive passé par référence aux modules externes
     local antiAfkRef = { value = false }
