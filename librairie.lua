@@ -813,11 +813,9 @@ function SoroniceLib:CreateWindow(Config)
 	ContentContainer.Parent = MainFrame
 	ContentContainer.BackgroundTransparency = 1
 	ContentContainer.Position = UDim2.new(0, 80, 0, 50)
-    if IsMobile then
-        ContentContainer.Size = UDim2.new(0, 310, 0, 200)
-    else
-	    ContentContainer.Size = UDim2.new(0, 460, 0, 290)
-    end
+    -- ★ FIX RESIZE : taille en Scale (relative à MainFrame) au lieu de pixels fixes,
+    -- pour que le contenu suive quand on agrandit/rétrécit la fenêtre dans les Settings.
+    ContentContainer.Size = UDim2.new(1, -90, 1, -60)
     ContentContainer.ClipsDescendants = true 
 
     -- [ FILTRAGE ] --
@@ -920,6 +918,7 @@ function SoroniceLib:CreateWindow(Config)
         ForceShow       = ForceShow,
         StartMulticolor = StartMulticolor,
         StopMulticolor  = StopMulticolor,
+        Notify          = function(NotifyConfig) SoroniceLib:Notify(NotifyConfig) end,
         CreateElement   = nil, -- rempli après la définition de CreateElement (ci-dessous)
     }
 
