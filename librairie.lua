@@ -286,9 +286,6 @@ function SoroniceLib:CreateWindow(Config)
 
     -- ============================================================
     -- CHARGEMENT DES MODULES GITHUB
-    -- Remplace les 3 URLs ci-dessous après avoir mis les fichiers
-    -- sur GitHub. Format raw :
-    --   https://raw.githubusercontent.com/COMPTE/REPO/main/FichierX.lua
     -- ============================================================
     local BUTTONS_URL  = "https://raw.githubusercontent.com/audinefroberto-max/Ma-librairie-cheat/refs/heads/main/Soronicelib%20buttons.lua"
     local ICONCARD_URL = "https://raw.githubusercontent.com/audinefroberto-max/Ma-librairie-cheat/refs/heads/main/Soronicelib%20iconcard.lua"
@@ -508,7 +505,7 @@ function SoroniceLib:CreateWindow(Config)
     RightContainer.Parent = TopBar
     RightContainer.BackgroundTransparency = 1
     RightContainer.AnchorPoint = Vector2.new(1, 0)
-    RightContainer.Position = UDim2.new(1, -110, 0, 0) -- On laisse de la place pour les boutons
+    RightContainer.Position = UDim2.new(1, -110, 0, 0)
     RightContainer.Size = UDim2.new(0.5, 0, 1, 0)
 
     local RightLayout = Instance.new("UIListLayout")
@@ -589,7 +586,7 @@ function SoroniceLib:CreateWindow(Config)
     ButtonsContainer.BackgroundTransparency = 1
     ButtonsContainer.AnchorPoint = Vector2.new(1, 0)
     ButtonsContainer.Position = UDim2.new(1, -10, 0, 0)
-    ButtonsContainer.Size = UDim2.new(0, 100, 1, 0) -- Zone réservée aux boutons
+    ButtonsContainer.Size = UDim2.new(0, 100, 1, 0)
 
     local SearchBtn = Instance.new("ImageButton")
     SearchBtn.Name = "SearchButton"
@@ -597,9 +594,9 @@ function SoroniceLib:CreateWindow(Config)
     SearchBtn.BackgroundTransparency = 1
     SearchBtn.Position = UDim2.new(0, 0, 0, 5)
     SearchBtn.Size = UDim2.new(0, 30, 0, 30)
-    SearchBtn.Image = "rbxassetid://84854196643814" -- [NOUVEL ID]
-    SearchBtn.ImageColor3 = Color3.new(1,1,1) -- [BLANC]
-    SearchBtn.ZIndex = 100 -- [FORCE AU PREMIER PLAN]
+    SearchBtn.Image = "rbxassetid://84854196643814"
+    SearchBtn.ImageColor3 = Color3.new(1,1,1)
+    SearchBtn.ZIndex = 100
 
 	local MinBtn = Instance.new("TextButton")
     MinBtn.Parent = ButtonsContainer
@@ -628,8 +625,6 @@ function SoroniceLib:CreateWindow(Config)
     
     local function StartDrag(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            -- On vérifie si la souris est sur le container des boutons
-            -- On utilise les coordonnées absolues pour être précis
             local mousePos = input.Position
             local btnPos = ButtonsContainer.AbsolutePosition
             local btnSize = ButtonsContainer.AbsoluteSize
@@ -691,7 +686,6 @@ function SoroniceLib:CreateWindow(Config)
         isAnimating = false
     end
 
-    -- Réaffiche immédiatement la fenêtre si elle était cachée (utilisé par le mode "Toujours visible")
     local function ForceShow()
         if not IsHidden then return end
         IsHidden = false
@@ -840,7 +834,6 @@ function SoroniceLib:CreateWindow(Config)
                             element.Visible = false
                         end
                     elseif element.Name == "IconCardGrid" then
-                        -- Les IconCard vivent une étage plus bas (dans leur grille), on les filtre aussi
                         for _, card in pairs(element:GetChildren()) do
                             if card:IsA("Frame") and card:GetAttribute("SearchName") then
                                 local cardName = card:GetAttribute("SearchName")
@@ -884,7 +877,7 @@ function SoroniceLib:CreateWindow(Config)
     SettingsPage.Parent = ContentContainer
     SettingsPage.BackgroundTransparency = 1
     SettingsPage.Size = UDim2.new(1, 0, 1, 0)
-    SettingsPage.ScrollBarThickness = 2 -- Scrollbar fine
+    SettingsPage.ScrollBarThickness = 2
     SettingsPage.Visible = false 
     SettingsPage.AutomaticCanvasSize = Enum.AutomaticSize.Y
     SettingsPage.CanvasSize = UDim2.new(0,0,0,0)
@@ -906,15 +899,16 @@ function SoroniceLib:CreateWindow(Config)
 
     -- ============================================================
     -- CONTEXTE PARTAGÉ pour les modules GitHub
-    -- Toutes les variables locales nécessaires sont disponibles ici
+    -- ★★★ CORRECTIF : "ModuleCtx" déclaré UNE SEULE FOIS, en local, ★★★
+    -- ★★★ ici. La redéclaration "local ModuleCtx" plus bas (qui   ★★★
+    -- ★★★ écrasait celle-ci avec une valeur nil) a été supprimée. ★★★
     -- ============================================================
-    ModuleCtx = {
+    local ModuleCtx = {
         Settings        = Settings,
         TweenService    = TweenService,
         UserInputService = UserInputService,
         ApplyLock       = ApplyLock,
         ActiveToggles   = ActiveToggles,
-        -- Settings page
         SettingsPage    = SettingsPage,
         IsMobile        = IsMobile,
         MainFrame       = MainFrame,
@@ -933,15 +927,14 @@ function SoroniceLib:CreateWindow(Config)
 	local FirstTab = true
 
     -- [ FONCTIONS DE CRÉATION D'ÉLÉMENTS ] --
-    -- Construit le contexte partagé pour tous les modules
-    local ModuleCtx  -- défini après MainStroke (plus bas), mais utilisé dans les modules
-    local ButtonRegistry  -- rempli après la définition du contexte
+    -- ★★★ CORRECTIF : la ligne "local ModuleCtx" qui se trouvait ★★★
+    -- ★★★ ici a été RETIRÉE — c'est elle qui causait le bug.     ★★★
+    local ButtonRegistry
     local IconCardFn
 
     -- Proxy de création : cherche dans ButtonRegistry, puis dans IconCardFn
     local function CreateElement(Page, Type, Config)
         Config = Config or {}
-        -- Chargement paresseux du registre (une seule fois)
         if not ButtonRegistry then
             local ok, res = pcall(function()
                 return loadstring(game:HttpGet(BUTTONS_URL))()(ModuleCtx)
@@ -949,7 +942,6 @@ function SoroniceLib:CreateWindow(Config)
             if ok then
                 ButtonRegistry = res
             else
-                -- Fallback intégré si GitHub inaccessible
                 ButtonRegistry = {}
                 warn("[SoroniceLib] Impossible de charger Buttons depuis GitHub : " .. tostring(res))
             end
@@ -979,7 +971,6 @@ function SoroniceLib:CreateWindow(Config)
 
     -- ============================================================
     -- CHARGEMENT DU MODULE SETTINGS depuis GitHub
-    -- Si inaccessible, fallback sur le bloc Settings intégré
     -- ============================================================
     do
         local ok, SettingsSetup = pcall(function()
@@ -987,7 +978,6 @@ function SoroniceLib:CreateWindow(Config)
         end)
         if not ok then
             warn("[SoroniceLib] Module Settings GitHub inaccessible — fallback intégré : " .. tostring(SettingsSetup))
-            -- Fallback : éléments Settings directement ici
             CreateElement(SettingsPage, "Toggle", {
                 Name = "💤 Mode AFK (Anti-Kick)",
                 CurrentValue = false,
