@@ -22,7 +22,9 @@ return function(Ctx)
     local function NextLayoutOrder(Page)
         local max = 0
         for _, c in ipairs(Page:GetChildren()) do
-            if c.LayoutOrder and c.LayoutOrder > max then max = c.LayoutOrder end
+            if (c:IsA("Frame") or c:IsA("ScrollingFrame")) and c.LayoutOrder then
+                if c.LayoutOrder > max then max = c.LayoutOrder end
+            end
         end
         return max + 1
     end
