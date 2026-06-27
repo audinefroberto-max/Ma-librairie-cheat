@@ -667,6 +667,9 @@ function SoroniceLib:CreateWindow(Config)
         IsHidden = not IsHidden
         
         if IsHidden then
+            -- Mémorise la taille ACTUELLE (pas TargetSize d'origine)
+            -- pour la restaurer correctement même si l'utilisateur a redimensionné
+            local CurrentSize = MainFrame.Size
             local closeT = TweenService:Create(MainFrame, TweenInfo.new(0.7, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(0,0,0,0)})
             closeT:Play()
             closeT.Completed:Wait()
@@ -674,6 +677,8 @@ function SoroniceLib:CreateWindow(Config)
             if IsMobile and MobileOpenBtn then 
                 MobileOpenBtn.Visible = true 
             end
+            -- Stocke la taille courante pour la réouverture
+            TargetSize = CurrentSize
         else
             if IsMobile and MobileOpenBtn then 
                 MobileOpenBtn.Visible = false 
@@ -1142,6 +1147,7 @@ function SoroniceLib:CreateWindow(Config)
             end
             return SliderObj
         end
+        function TabFunctions:CreateCodeBlock(Config) return CreateElement(Page, "CodeBlock", Config) end
 		return TabFunctions
 	end
 	return WindowFunctions
