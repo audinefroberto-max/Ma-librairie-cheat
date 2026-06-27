@@ -409,13 +409,51 @@ return function(Ctx)
         end
     })
 
-    -- Applique la taille sauvegardée dès l'ouverture (sans attendre que
-    -- l'utilisateur touche aux sliders), avec un petit tween doux.
+    -- Applique la taille sauvegardée dès l'ouverture
     if SaveData.WindowWidth ~= (TargetSize.X.Offset or 550) or SaveData.WindowHeight ~= (TargetSize.Y.Offset or 350) then
-        task.delay(0.75, function() -- attend la fin de l'animation d'ouverture
+        task.delay(0.75, function()
             TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
                 Size = UDim2.new(0, SaveData.WindowWidth, 0, SaveData.WindowHeight)
             }):Play()
         end)
     end
+
+    -- ============================================================
+    -- BOUTON RESET — remet tout aux valeurs d'origine et efface
+    -- le fichier de sauvegarde.
+    -- ============================================================
+    CreateElement(SettingsPage, "Section", {Text = "⚠️ Réinitialisation"})
+
+    CreateElement(SettingsPage, "Button", {
+        Name = "🔄 Remettre les paramètres d'origine",
+        Callback = function()
+            -- Supprimer le fichier de sauvegarde
+            if CanSave and isfile(SAVE_FILE) then
+                pcall(function() delfile(SAVE_FILE) end)
+            end
+
+            -- Remettre la fenêtre à la taille d'origine
+            local OrigW = TargetSize.X.Offset or 550
+            local OrigH = TargetSize.Y.Offset or 350
+            TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                Size = UDim2.new(0, OrigW, 0, OrigH)
+            }):Play()
+
+            -- Remettre les propriétés visuelles
+            MainFrame.BackgroundColor3 = Settings.ThemeColor
+            MainFrame.BackgroundTransparency = 0.2
+            MainCorner.CornerRadius = UDim.new(0, 10)
+            MainStroke.Enabled = true
+            MainStroke.Thickness = 1.5
+            MainStroke.Transparency = 0
+            MainStroke.Color = Color3.fromRGB(50, 50, 50)
+
+            -- Arrêter tous les modes animés
+            StopMulticolor()
+            StopWindowMulticolor()
+            StopGradient()
+
+            SafeNotify("Réinitialisation", "Paramètres remis à l'état d'origine. Relancez le script pour finaliser.")
+        end
+    })
 end
