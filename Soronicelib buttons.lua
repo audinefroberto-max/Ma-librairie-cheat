@@ -1,18 +1,31 @@
 -- ================================================================
--- SoroniceLib_Buttons.lua
--- Module séparé : tous les types d'éléments (Button, Toggle, etc.)
--- Utilisé par la librairie principale via loadstring(game:HttpGet(URL))()
--- Pour ajouter un nouveau type : créez une fonction Reg["NomDuType"]
+-- SoroniceLib_Buttons.lua  (V2 — ajout CodeBlock + fix LayoutOrder)
+-- ================================================================
+-- NOUVEAU : CreateCodeBlock
+--   Boîte pleine largeur, fond noir semi-transparent, contour noir,
+--   texte multiligne, bouton Copier en haut à droite.
+--   Dès que le bouton est cliqué, le texte est copié dans le
+--   presse-papier (setclipboard ou toclipboard selon l'executor).
+--   S'adapte à la largeur de la fenêtre si celle-ci est redimensionnée.
 -- ================================================================
 
 return function(Ctx)
-    local Settings      = Ctx.Settings
-    local TweenService  = Ctx.TweenService
-    local UserInputService = Ctx.UserInputService
-    local ApplyLock     = Ctx.ApplyLock
-    local ActiveToggles = Ctx.ActiveToggles
+    local Settings         = Ctx.Settings
+    local TweenService      = Ctx.TweenService
+    local UserInputService  = Ctx.UserInputService
+    local ApplyLock         = Ctx.ApplyLock
+    local ActiveToggles     = Ctx.ActiveToggles
 
     local Reg = {}
+
+    -- Helper : LayoutOrder auto-croissant dans une page
+    local function NextLayoutOrder(Page)
+        local max = 0
+        for _, c in ipairs(Page:GetChildren()) do
+            if c.LayoutOrder and c.LayoutOrder > max then max = c.LayoutOrder end
+        end
+        return max + 1
+    end
 
     -- ============================================================
     -- BUTTON
@@ -23,17 +36,15 @@ return function(Ctx)
         BtnFrame.Parent = Page
         BtnFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
         BtnFrame.Size = UDim2.new(1,-10,0,35)
+        BtnFrame.LayoutOrder = NextLayoutOrder(Page)
         Instance.new("UICorner", BtnFrame).CornerRadius = UDim.new(0,6)
         BtnFrame:SetAttribute("SearchName", string.lower(Config.Name or ""))
 
         local Btn = Instance.new("TextButton")
-        Btn.Parent = BtnFrame
-        Btn.BackgroundTransparency = 1
-        Btn.Size = UDim2.new(1,0,1,0)
-        Btn.Font = Enum.Font.SourceSans
+        Btn.Parent = BtnFrame; Btn.BackgroundTransparency = 1
+        Btn.Size = UDim2.new(1,0,1,0); Btn.Font = Enum.Font.SourceSans
         Btn.Text = "  " .. (Config.Name or "")
-        Btn.TextColor3 = Settings.TextColor
-        Btn.TextSize = 16
+        Btn.TextColor3 = Settings.TextColor; Btn.TextSize = 16
         Btn.TextXAlignment = Enum.TextXAlignment.Left
 
         local Locked = ApplyLock(BtnFrame, Config)
@@ -44,60 +55,44 @@ return function(Ctx)
                 TweenService:Create(BtnFrame, TweenInfo.new(0.1), {BackgroundColor3=Color3.fromRGB(30,30,30)}):Play()
                 if Config.Callback then Config.Callback() end
             end)
-        else
-            Btn.Active = false
-        end
+        else Btn.Active = false end
 
-        function ReturnedTable:Set(NewName)
-            Btn.Text = "  " .. NewName
-        end
+        function ReturnedTable:Set(NewName) Btn.Text = "  " .. NewName end
         return ReturnedTable
     end
 
     -- ============================================================
-    -- TOGGLE — 3 styles configurables via Config.ToggleStyle = 1/2/3
-    --   Style 1 : classique (défaut)
-    --   Style 2 : esthétique — plus large, icône dans le bouton, glow
-    --   Style 3 : Rainbow — contour multicolore tournant
+    -- TOGGLE (3 styles)
     -- ============================================================
     function Reg.Toggle(Page, Config)
         local ReturnedTable = {}
         local Style = Config.ToggleStyle or 1
 
         local ToggleFrame = Instance.new("Frame")
-        ToggleFrame.Parent = Page
-        ToggleFrame.BackgroundTransparency = 1
+        ToggleFrame.Parent = Page; ToggleFrame.BackgroundTransparency = 1
         ToggleFrame.Size = UDim2.new(1,-10,0,35)
+        ToggleFrame.LayoutOrder = NextLayoutOrder(Page)
         ToggleFrame:SetAttribute("SearchName", string.lower(Config.Name or ""))
 
-        local Label = Instance.new("TextLabel")
-        Label.Parent = ToggleFrame
-        Label.BackgroundTransparency = 1
-        Label.Size = UDim2.new(0.7,0,1,0)
-        Label.Position = UDim2.new(0,10,0,0)
-        Label.Text = Config.Name or ""
-        Label.TextColor3 = Settings.TextColor
-        Label.TextXAlignment = Enum.TextXAlignment.Left
-        Label.TextSize = 16
-        Label.Font = Enum.Font.SourceSans
+        local Label = Instance.new("TextLabel"); Label.Parent = ToggleFrame
+        Label.BackgroundTransparency = 1; Label.Size = UDim2.new(0.7,0,1,0)
+        Label.Position = UDim2.new(0,10,0,0); Label.Text = Config.Name or ""
+        Label.TextColor3 = Settings.TextColor; Label.TextXAlignment = Enum.TextXAlignment.Left
+        Label.TextSize = 16; Label.Font = Enum.Font.SourceSans
 
-        local Locked   = ApplyLock(ToggleFrame, Config)
-        local Toggled  = Config.CurrentValue or false
+        local Locked  = ApplyLock(ToggleFrame, Config)
+        local Toggled = Config.CurrentValue or false
 
-        -- ─── Style 1 : Classique ───────────────────────────────
         if Style == 1 then
-            local SwitchBg = Instance.new("Frame")
-            SwitchBg.Parent = ToggleFrame
+            local SwitchBg = Instance.new("Frame"); SwitchBg.Parent = ToggleFrame
             SwitchBg.BackgroundColor3 = Color3.fromRGB(40,40,40)
             SwitchBg.Position = UDim2.new(1,-60,0.5,-12)
             SwitchBg.Size = UDim2.new(0,50,0,24)
             Instance.new("UICorner", SwitchBg).CornerRadius = UDim.new(1,0)
 
-            local Knob = Instance.new("Frame")
-            Knob.Parent = SwitchBg
+            local Knob = Instance.new("Frame"); Knob.Parent = SwitchBg
             Knob.BackgroundColor3 = Settings.TextColor
-            Knob.Position = UDim2.new(0,2,0.5,-10)
-            Knob.Size = UDim2.new(0,20,0,20)
+            Knob.Position = UDim2.new(0,2,0.5,-10); Knob.Size = UDim2.new(0,20,0,20)
             Instance.new("UICorner", Knob).CornerRadius = UDim.new(1,0)
 
             table.insert(ActiveToggles, {Callback = Config.Callback})
@@ -111,142 +106,74 @@ return function(Ctx)
             end
             if Toggled then Update() end
 
-            local ClickBtn = Instance.new("TextButton")
-            ClickBtn.Parent = SwitchBg
-            ClickBtn.BackgroundTransparency = 1
-            ClickBtn.Size = UDim2.new(1,0,1,0)
-            ClickBtn.Text = ""
+            local ClickBtn = Instance.new("TextButton"); ClickBtn.Parent = SwitchBg
+            ClickBtn.BackgroundTransparency = 1; ClickBtn.Size = UDim2.new(1,0,1,0); ClickBtn.Text = ""
             if not Locked then
                 ClickBtn.MouseButton1Click:Connect(function() Toggled = not Toggled; Update() end)
-            else
-                ClickBtn.Active = false
-            end
+            else ClickBtn.Active = false end
 
-            function ReturnedTable:Set(Value)
-                Toggled = Value; Update()
-            end
+            function ReturnedTable:Set(Value) Toggled = Value; Update() end
 
-        -- ─── Style 2 : Esthétique ─────────────────────────────
         elseif Style == 2 then
-            local SwitchBg = Instance.new("Frame")
-            SwitchBg.Parent = ToggleFrame
+            local SwitchBg = Instance.new("Frame"); SwitchBg.Parent = ToggleFrame
             SwitchBg.BackgroundColor3 = Color3.fromRGB(35,35,35)
-            SwitchBg.Position = UDim2.new(1,-74,0.5,-14)
-            SwitchBg.Size = UDim2.new(0,64,0,28)
+            SwitchBg.Position = UDim2.new(1,-74,0.5,-14); SwitchBg.Size = UDim2.new(0,64,0,28)
             Instance.new("UICorner", SwitchBg).CornerRadius = UDim.new(1,0)
-
-            -- Gradient de fond
-            local BgGrad = Instance.new("UIGradient")
-            BgGrad.Parent = SwitchBg
-            BgGrad.Rotation = 0
+            local BgGrad = Instance.new("UIGradient"); BgGrad.Parent = SwitchBg; BgGrad.Rotation = 0
             BgGrad.Color = ColorSequence.new(Color3.fromRGB(35,35,35), Color3.fromRGB(25,25,25))
-
-            local Knob = Instance.new("Frame")
-            Knob.Parent = SwitchBg
+            local Knob = Instance.new("Frame"); Knob.Parent = SwitchBg
             Knob.BackgroundColor3 = Color3.fromRGB(230,230,230)
-            Knob.AnchorPoint = Vector2.new(0,0.5)
-            Knob.Position = UDim2.new(0,3,0.5,0)
-            Knob.Size = UDim2.new(0,22,0,22)
-            Instance.new("UICorner", Knob).CornerRadius = UDim.new(1,0)
-
-            -- Ombre sur le bouton
-            local KnobStroke = Instance.new("UIStroke")
-            KnobStroke.Parent = Knob
-            KnobStroke.Color = Color3.fromRGB(0,0,0)
-            KnobStroke.Thickness = 1
-            KnobStroke.Transparency = 0.5
-
-            -- Icône dans le bouton (cercle coloré ou X)
-            local KnobIcon = Instance.new("ImageLabel")
-            KnobIcon.Parent = Knob
-            KnobIcon.BackgroundTransparency = 1
-            KnobIcon.AnchorPoint = Vector2.new(0.5,0.5)
-            KnobIcon.Position = UDim2.new(0.5,0,0.5,0)
-            KnobIcon.Size = UDim2.new(0,10,0,10)
-            KnobIcon.Image = "rbxassetid://7072725344" -- icône X
-            KnobIcon.ImageColor3 = Color3.fromRGB(120,120,120)
-
+            Knob.AnchorPoint = Vector2.new(0,0.5); Knob.Position = UDim2.new(0,3,0.5,0)
+            Knob.Size = UDim2.new(0,22,0,22); Instance.new("UICorner", Knob).CornerRadius = UDim.new(1,0)
+            local KnobStroke = Instance.new("UIStroke"); KnobStroke.Parent = Knob
+            KnobStroke.Color = Color3.fromRGB(0,0,0); KnobStroke.Thickness = 1; KnobStroke.Transparency = 0.5
+            local KnobIcon = Instance.new("ImageLabel"); KnobIcon.Parent = Knob
+            KnobIcon.BackgroundTransparency = 1; KnobIcon.AnchorPoint = Vector2.new(0.5,0.5)
+            KnobIcon.Position = UDim2.new(0.5,0,0.5,0); KnobIcon.Size = UDim2.new(0,10,0,10)
+            KnobIcon.Image = "rbxassetid://7072725344"; KnobIcon.ImageColor3 = Color3.fromRGB(120,120,120)
             table.insert(ActiveToggles, {Callback = Config.Callback})
-
             local function Update()
                 if Toggled then
                     TweenService:Create(Knob, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Position=UDim2.new(1,-25,0.5,0)}):Play()
                     TweenService:Create(SwitchBg, TweenInfo.new(0.25), {BackgroundColor3=Settings.AccentColor}):Play()
-                    BgGrad.Color = ColorSequence.new(Settings.AccentColor, Color3.new(
-                        math.clamp(Settings.AccentColor.R * 0.7, 0, 1),
-                        math.clamp(Settings.AccentColor.G * 0.7, 0, 1),
-                        math.clamp(Settings.AccentColor.B * 0.7, 0, 1)
-                    ))
-                    KnobIcon.Image = "rbxassetid://6031094678" -- ✓
-                    KnobIcon.ImageColor3 = Settings.AccentColor
+                    BgGrad.Color = ColorSequence.new(Settings.AccentColor, Color3.new(math.clamp(Settings.AccentColor.R*0.7,0,1), math.clamp(Settings.AccentColor.G*0.7,0,1), math.clamp(Settings.AccentColor.B*0.7,0,1)))
+                    KnobIcon.Image = "rbxassetid://6031094678"; KnobIcon.ImageColor3 = Settings.AccentColor
                 else
                     TweenService:Create(Knob, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Position=UDim2.new(0,3,0.5,0)}):Play()
                     TweenService:Create(SwitchBg, TweenInfo.new(0.25), {BackgroundColor3=Color3.fromRGB(35,35,35)}):Play()
                     BgGrad.Color = ColorSequence.new(Color3.fromRGB(35,35,35), Color3.fromRGB(25,25,25))
-                    KnobIcon.Image = "rbxassetid://7072725344" -- ✗
-                    KnobIcon.ImageColor3 = Color3.fromRGB(120,120,120)
+                    KnobIcon.Image = "rbxassetid://7072725344"; KnobIcon.ImageColor3 = Color3.fromRGB(120,120,120)
                 end
                 if Config.Callback then Config.Callback(Toggled) end
             end
             if Toggled then Update() end
+            local ClickBtn = Instance.new("TextButton"); ClickBtn.Parent = SwitchBg
+            ClickBtn.BackgroundTransparency = 1; ClickBtn.Size = UDim2.new(1,0,1,0); ClickBtn.Text = ""
+            if not Locked then ClickBtn.MouseButton1Click:Connect(function() Toggled = not Toggled; Update() end)
+            else ClickBtn.Active = false end
+            function ReturnedTable:Set(Value) Toggled = Value; Update() end
 
-            local ClickBtn = Instance.new("TextButton")
-            ClickBtn.Parent = SwitchBg
-            ClickBtn.BackgroundTransparency = 1
-            ClickBtn.Size = UDim2.new(1,0,1,0)
-            ClickBtn.Text = ""
-            if not Locked then
-                ClickBtn.MouseButton1Click:Connect(function() Toggled = not Toggled; Update() end)
-            else
-                ClickBtn.Active = false
-            end
-
-            function ReturnedTable:Set(Value)
-                Toggled = Value; Update()
-            end
-
-        -- ─── Style 3 : Rainbow (contour multicolore tournant) ──
         elseif Style == 3 then
-            local SwitchBg = Instance.new("Frame")
-            SwitchBg.Parent = ToggleFrame
+            local SwitchBg = Instance.new("Frame"); SwitchBg.Parent = ToggleFrame
             SwitchBg.BackgroundColor3 = Color3.fromRGB(28,28,28)
-            SwitchBg.Position = UDim2.new(1,-74,0.5,-14)
-            SwitchBg.Size = UDim2.new(0,64,0,28)
+            SwitchBg.Position = UDim2.new(1,-74,0.5,-14); SwitchBg.Size = UDim2.new(0,64,0,28)
             Instance.new("UICorner", SwitchBg).CornerRadius = UDim.new(1,0)
-
-            -- Contour Rainbow tournant
-            local RainbowStroke = Instance.new("UIStroke")
-            RainbowStroke.Parent = SwitchBg
-            RainbowStroke.Thickness = 2
-            RainbowStroke.Color = Color3.fromRGB(80,80,80)
+            local RainbowStroke = Instance.new("UIStroke"); RainbowStroke.Parent = SwitchBg
+            RainbowStroke.Thickness = 2; RainbowStroke.Color = Color3.fromRGB(80,80,80)
             RainbowStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-
-            local Knob = Instance.new("Frame")
-            Knob.Parent = SwitchBg
+            local Knob = Instance.new("Frame"); Knob.Parent = SwitchBg
             Knob.BackgroundColor3 = Color3.fromRGB(220,220,220)
-            Knob.AnchorPoint = Vector2.new(0,0.5)
-            Knob.Position = UDim2.new(0,3,0.5,0)
-            Knob.Size = UDim2.new(0,22,0,22)
-            Instance.new("UICorner", Knob).CornerRadius = UDim.new(1,0)
-
-            -- Animation rainbow permanente
+            Knob.AnchorPoint = Vector2.new(0,0.5); Knob.Position = UDim2.new(0,3,0.5,0)
+            Knob.Size = UDim2.new(0,22,0,22); Instance.new("UICorner", Knob).CornerRadius = UDim.new(1,0)
             local rainbowToken = 0
             local function StartRainbow()
-                rainbowToken = rainbowToken + 1
-                local myToken = rainbowToken
+                rainbowToken = rainbowToken + 1; local myToken = rainbowToken
                 task.spawn(function()
                     local hue = 0
-                    while rainbowToken == myToken do
-                        hue = (hue + 0.006) % 1
-                        RainbowStroke.Color = Color3.fromHSV(hue, 1, 1)
-                        task.wait(0.025)
-                    end
+                    while rainbowToken == myToken do hue=(hue+0.006)%1; RainbowStroke.Color=Color3.fromHSV(hue,1,1); task.wait(0.025) end
                 end)
             end
-            StartRainbow()
-
-            table.insert(ActiveToggles, {Callback = Config.Callback})
-
+            StartRainbow(); table.insert(ActiveToggles, {Callback = Config.Callback})
             local function Update()
                 if Toggled then
                     TweenService:Create(Knob, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Position=UDim2.new(1,-25,0.5,0), BackgroundColor3=Color3.fromRGB(255,255,255)}):Play()
@@ -258,21 +185,11 @@ return function(Ctx)
                 if Config.Callback then Config.Callback(Toggled) end
             end
             if Toggled then Update() end
-
-            local ClickBtn = Instance.new("TextButton")
-            ClickBtn.Parent = SwitchBg
-            ClickBtn.BackgroundTransparency = 1
-            ClickBtn.Size = UDim2.new(1,0,1,0)
-            ClickBtn.Text = ""
-            if not Locked then
-                ClickBtn.MouseButton1Click:Connect(function() Toggled = not Toggled; Update() end)
-            else
-                ClickBtn.Active = false
-            end
-
-            function ReturnedTable:Set(Value)
-                Toggled = Value; Update()
-            end
+            local ClickBtn = Instance.new("TextButton"); ClickBtn.Parent = SwitchBg
+            ClickBtn.BackgroundTransparency = 1; ClickBtn.Size = UDim2.new(1,0,1,0); ClickBtn.Text = ""
+            if not Locked then ClickBtn.MouseButton1Click:Connect(function() Toggled = not Toggled; Update() end)
+            else ClickBtn.Active = false end
+            function ReturnedTable:Set(Value) Toggled = Value; Update() end
         end
 
         return ReturnedTable
@@ -283,33 +200,24 @@ return function(Ctx)
     -- ============================================================
     function Reg.Keybind(Page, Config)
         local ReturnedTable = {}
-        local BindFrame = Instance.new("Frame")
-        BindFrame.Parent = Page
+        local BindFrame = Instance.new("Frame"); BindFrame.Parent = Page
         BindFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
         BindFrame.Size = UDim2.new(1,-10,0,35)
+        BindFrame.LayoutOrder = NextLayoutOrder(Page)
         Instance.new("UICorner", BindFrame).CornerRadius = UDim.new(0,6)
         BindFrame:SetAttribute("SearchName", string.lower(Config.Name or ""))
 
-        local Label = Instance.new("TextLabel")
-        Label.Parent = BindFrame
-        Label.BackgroundTransparency = 1
-        Label.Size = UDim2.new(0.7,0,1,0)
-        Label.Position = UDim2.new(0,10,0,0)
-        Label.Text = Config.Name or ""
-        Label.TextColor3 = Settings.TextColor
-        Label.TextXAlignment = Enum.TextXAlignment.Left
-        Label.TextSize = 16
-        Label.Font = Enum.Font.SourceSans
+        local Label = Instance.new("TextLabel"); Label.Parent = BindFrame
+        Label.BackgroundTransparency = 1; Label.Size = UDim2.new(0.7,0,1,0)
+        Label.Position = UDim2.new(0,10,0,0); Label.Text = Config.Name or ""
+        Label.TextColor3 = Settings.TextColor; Label.TextXAlignment = Enum.TextXAlignment.Left
+        Label.TextSize = 16; Label.Font = Enum.Font.SourceSans
 
-        local BindBtn = Instance.new("TextButton")
-        BindBtn.Parent = BindFrame
+        local BindBtn = Instance.new("TextButton"); BindBtn.Parent = BindFrame
         BindBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-        BindBtn.Position = UDim2.new(1,-80,0.5,-12)
-        BindBtn.Size = UDim2.new(0,70,0,24)
+        BindBtn.Position = UDim2.new(1,-80,0.5,-12); BindBtn.Size = UDim2.new(0,70,0,24)
         BindBtn.Text = UserInputService:GetStringForKeyCode(Settings.Keybind)
-        BindBtn.Font = Enum.Font.SourceSansBold
-        BindBtn.TextColor3 = Settings.TextColor
-        BindBtn.TextSize = 14
+        BindBtn.Font = Enum.Font.SourceSansBold; BindBtn.TextColor3 = Settings.TextColor; BindBtn.TextSize = 14
         Instance.new("UICorner", BindBtn).CornerRadius = UDim.new(0,6)
 
         BindBtn.MouseButton1Click:Connect(function()
@@ -321,13 +229,12 @@ return function(Ctx)
                     BindBtn.Text = UserInputService:GetStringForKeyCode(input.KeyCode)
                     Conn:Disconnect()
                     game.StarterGui:SetCore("SendNotification", {Title = "Réglages", Text = "Nouvelle touche : " .. BindBtn.Text, Duration = 3})
+                    if Config.Callback then Config.Callback() end
                 end
             end)
         end)
 
-        function ReturnedTable:Set(KeyName)
-            BindBtn.Text = KeyName
-        end
+        function ReturnedTable:Set(KeyName) BindBtn.Text = KeyName end
         return ReturnedTable
     end
 
@@ -336,26 +243,16 @@ return function(Ctx)
     -- ============================================================
     function Reg.Label(Page, Config)
         local ReturnedTable = {}
-        local LabelFrame = Instance.new("Frame")
-        LabelFrame.Parent = Page
-        LabelFrame.BackgroundTransparency = 1
-        LabelFrame.Size = UDim2.new(1,-10,0,25)
+        local LabelFrame = Instance.new("Frame"); LabelFrame.Parent = Page
+        LabelFrame.BackgroundTransparency = 1; LabelFrame.Size = UDim2.new(1,-10,0,25)
+        LabelFrame.LayoutOrder = NextLayoutOrder(Page)
         LabelFrame:SetAttribute("SearchName", string.lower(Config.Text or ""))
-
-        local Txt = Instance.new("TextLabel")
-        Txt.Parent = LabelFrame
-        Txt.BackgroundTransparency = 1
-        Txt.Size = UDim2.new(1,0,1,0)
-        Txt.Position = UDim2.new(0,10,0,0)
-        Txt.Text = Config.Text or ""
-        Txt.TextColor3 = Settings.SubTextColor
-        Txt.TextXAlignment = Enum.TextXAlignment.Left
-        Txt.Font = Enum.Font.SourceSans
-        Txt.TextSize = 16
-
-        function ReturnedTable:Set(NewText)
-            Txt.Text = NewText
-        end
+        local Txt = Instance.new("TextLabel"); Txt.Parent = LabelFrame
+        Txt.BackgroundTransparency = 1; Txt.Size = UDim2.new(1,0,1,0)
+        Txt.Position = UDim2.new(0,10,0,0); Txt.Text = Config.Text or ""
+        Txt.TextColor3 = Settings.SubTextColor; Txt.TextXAlignment = Enum.TextXAlignment.Left
+        Txt.Font = Enum.Font.SourceSans; Txt.TextSize = 16
+        function ReturnedTable:Set(NewText) Txt.Text = NewText end
         return ReturnedTable
     end
 
@@ -364,35 +261,20 @@ return function(Ctx)
     -- ============================================================
     function Reg.Paragraph(Page, Config)
         local ReturnedTable = {}
-        local ParaFrame = Instance.new("Frame")
-        ParaFrame.Parent = Page
-        ParaFrame.BackgroundTransparency = 1
-        ParaFrame.Size = UDim2.new(1,-10,0,60)
+        local ParaFrame = Instance.new("Frame"); ParaFrame.Parent = Page
+        ParaFrame.BackgroundTransparency = 1; ParaFrame.Size = UDim2.new(1,-10,0,60)
+        ParaFrame.LayoutOrder = NextLayoutOrder(Page)
         ParaFrame:SetAttribute("SearchName", string.lower(Config.Title or ""))
-
-        local Title = Instance.new("TextLabel")
-        Title.Parent = ParaFrame
-        Title.BackgroundTransparency = 1
-        Title.Size = UDim2.new(1,0,0,20)
-        Title.Position = UDim2.new(0,10,0,0)
-        Title.Text = Config.Title or ""
-        Title.TextColor3 = Settings.AccentColor
-        Title.TextXAlignment = Enum.TextXAlignment.Left
-        Title.Font = Enum.Font.SourceSansBold
-        Title.TextSize = 16
-
-        local Content = Instance.new("TextLabel")
-        Content.Parent = ParaFrame
-        Content.BackgroundTransparency = 1
-        Content.Size = UDim2.new(1,-20,0,40)
-        Content.Position = UDim2.new(0,10,0,20)
-        Content.Text = Config.Content or ""
-        Content.TextColor3 = Color3.new(0.8,0.8,0.8)
-        Content.TextXAlignment = Enum.TextXAlignment.Left
-        Content.Font = Enum.Font.SourceSans
-        Content.TextSize = 14
-        Content.TextWrapped = true
-
+        local Title = Instance.new("TextLabel"); Title.Parent = ParaFrame
+        Title.BackgroundTransparency = 1; Title.Size = UDim2.new(1,0,0,20)
+        Title.Position = UDim2.new(0,10,0,0); Title.Text = Config.Title or ""
+        Title.TextColor3 = Settings.AccentColor; Title.TextXAlignment = Enum.TextXAlignment.Left
+        Title.Font = Enum.Font.SourceSansBold; Title.TextSize = 16
+        local Content = Instance.new("TextLabel"); Content.Parent = ParaFrame
+        Content.BackgroundTransparency = 1; Content.Size = UDim2.new(1,-20,0,40)
+        Content.Position = UDim2.new(0,10,0,20); Content.Text = Config.Content or ""
+        Content.TextColor3 = Color3.new(0.8,0.8,0.8); Content.TextXAlignment = Enum.TextXAlignment.Left
+        Content.Font = Enum.Font.SourceSans; Content.TextSize = 14; Content.TextWrapped = true
         function ReturnedTable:Set(NewConfig)
             if NewConfig.Title then Title.Text = NewConfig.Title end
             if NewConfig.Content then Content.Text = NewConfig.Content end
@@ -401,99 +283,66 @@ return function(Ctx)
     end
 
     -- ============================================================
-    -- INPUT (TextBox)
+    -- INPUT
     -- ============================================================
     function Reg.Input(Page, Config)
         local ReturnedTable = {}
-        local InputFrame = Instance.new("Frame")
-        InputFrame.Parent = Page
+        local InputFrame = Instance.new("Frame"); InputFrame.Parent = Page
         InputFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
         InputFrame.Size = UDim2.new(1,-10,0,35)
+        InputFrame.LayoutOrder = NextLayoutOrder(Page)
         Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0,6)
         InputFrame:SetAttribute("SearchName", string.lower(Config.Name or ""))
-
-        local Label = Instance.new("TextLabel")
-        Label.Parent = InputFrame
-        Label.BackgroundTransparency = 1
-        Label.Position = UDim2.new(0,10,0,0)
-        Label.Size = UDim2.new(0.5,0,1,0)
-        Label.Text = Config.Name or ""
-        Label.TextColor3 = Settings.TextColor
-        Label.TextXAlignment = Enum.TextXAlignment.Left
-        Label.Font = Enum.Font.SourceSans
-        Label.TextSize = 16
-
-        local Box = Instance.new("TextBox")
-        Box.Parent = InputFrame
+        local Label = Instance.new("TextLabel"); Label.Parent = InputFrame
+        Label.BackgroundTransparency = 1; Label.Position = UDim2.new(0,10,0,0)
+        Label.Size = UDim2.new(0.5,0,1,0); Label.Text = Config.Name or ""
+        Label.TextColor3 = Settings.TextColor; Label.TextXAlignment = Enum.TextXAlignment.Left
+        Label.Font = Enum.Font.SourceSans; Label.TextSize = 16
+        local Box = Instance.new("TextBox"); Box.Parent = InputFrame
         Box.BackgroundColor3 = Color3.fromRGB(40,40,40)
-        Box.Position = UDim2.new(0.6,0,0.15,0)
-        Box.Size = UDim2.new(0.38,0,0.7,0)
-        Box.Font = Enum.Font.SourceSans
-        Box.Text = Config.CurrentValue or ""
+        Box.Position = UDim2.new(0.6,0,0.15,0); Box.Size = UDim2.new(0.38,0,0.7,0)
+        Box.Font = Enum.Font.SourceSans; Box.Text = Config.CurrentValue or ""
         Box.PlaceholderText = Config.PlaceholderText or ""
-        Box.TextColor3 = Color3.new(1,1,1)
-        Box.TextSize = 14
+        Box.TextColor3 = Color3.new(1,1,1); Box.TextSize = 14
         Instance.new("UICorner", Box).CornerRadius = UDim.new(0,4)
-
         Box.FocusLost:Connect(function()
             if Config.RemoveTextAfterFocusLost then Box.Text = "" end
             if Config.Callback then Config.Callback(Box.Text) end
         end)
-
-        function ReturnedTable:Set(NewText)
-            Box.Text = NewText
-        end
+        function ReturnedTable:Set(NewText) Box.Text = NewText end
         return ReturnedTable
     end
 
     -- ============================================================
-    -- SECTION (titre de groupe)
+    -- SECTION
     -- ============================================================
     function Reg.Section(Page, Config)
         local ReturnedTable = {}
-        local SectionFrame = Instance.new("Frame")
-        SectionFrame.Parent = Page
-        SectionFrame.BackgroundTransparency = 1
-        SectionFrame.Size = UDim2.new(1,-10,0,30)
+        local SectionFrame = Instance.new("Frame"); SectionFrame.Parent = Page
+        SectionFrame.BackgroundTransparency = 1; SectionFrame.Size = UDim2.new(1,-10,0,30)
+        SectionFrame.LayoutOrder = NextLayoutOrder(Page)
         SectionFrame:SetAttribute("SearchName", string.lower(Config.Text or ""))
-
-        local Txt = Instance.new("TextLabel")
-        Txt.Parent = SectionFrame
-        Txt.BackgroundTransparency = 1
-        Txt.Size = UDim2.new(1,0,1,0)
-        Txt.Position = UDim2.new(0,10,0,0)
-        Txt.Text = Config.Text or ""
-        Txt.TextColor3 = Settings.AccentColor
-        Txt.TextXAlignment = Enum.TextXAlignment.Left
-        Txt.Font = Enum.Font.SourceSansBold
-        Txt.TextSize = 18
-
-        function ReturnedTable:Set(NewText)
-            Txt.Text = NewText
-        end
+        local Txt = Instance.new("TextLabel"); Txt.Parent = SectionFrame
+        Txt.BackgroundTransparency = 1; Txt.Size = UDim2.new(1,0,1,0)
+        Txt.Position = UDim2.new(0,10,0,0); Txt.Text = Config.Text or ""
+        Txt.TextColor3 = Settings.AccentColor; Txt.TextXAlignment = Enum.TextXAlignment.Left
+        Txt.Font = Enum.Font.SourceSansBold; Txt.TextSize = 18
+        function ReturnedTable:Set(NewText) Txt.Text = NewText end
         return ReturnedTable
     end
 
     -- ============================================================
-    -- DIVIDER (ligne de séparation)
+    -- DIVIDER
     -- ============================================================
     function Reg.Divider(Page, Config)
         local ReturnedTable = {}
-        local DivFrame = Instance.new("Frame")
-        DivFrame.Parent = Page
-        DivFrame.BackgroundTransparency = 1
-        DivFrame.Size = UDim2.new(1,-10,0,10)
-
-        local Line = Instance.new("Frame")
-        Line.Parent = DivFrame
+        local DivFrame = Instance.new("Frame"); DivFrame.Parent = Page
+        DivFrame.BackgroundTransparency = 1; DivFrame.Size = UDim2.new(1,-10,0,10)
+        DivFrame.LayoutOrder = NextLayoutOrder(Page)
+        local Line = Instance.new("Frame"); Line.Parent = DivFrame
         Line.BackgroundColor3 = Color3.fromRGB(60,60,60)
-        Line.Size = UDim2.new(1,0,0,2)
-        Line.Position = UDim2.new(0,0,0.5,0)
-        Line.BorderSizePixel = 0
-
-        function ReturnedTable:Set(Visible)
-            DivFrame.Visible = Visible
-        end
+        Line.Size = UDim2.new(1,0,0,2); Line.Position = UDim2.new(0,0,0.5,0); Line.BorderSizePixel = 0
+        function ReturnedTable:Set(Visible) DivFrame.Visible = Visible end
         return ReturnedTable
     end
 
@@ -502,55 +351,36 @@ return function(Ctx)
     -- ============================================================
     function Reg.ColorPicker(Page, Config)
         local ReturnedTable = {}
-        local ColorFrame = Instance.new("Frame")
-        ColorFrame.Parent = Page
+        local ColorFrame = Instance.new("Frame"); ColorFrame.Parent = Page
         ColorFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
         ColorFrame.Size = UDim2.new(1,-10,0,160)
+        ColorFrame.LayoutOrder = NextLayoutOrder(Page)
         Instance.new("UICorner", ColorFrame).CornerRadius = UDim.new(0,6)
         ColorFrame:SetAttribute("SearchName", string.lower(Config.Name or ""))
 
         local Locked = ApplyLock(ColorFrame, Config)
+        local Label = Instance.new("TextLabel"); Label.Parent = ColorFrame
+        Label.BackgroundTransparency = 1; Label.Position = UDim2.new(0,10,0,5)
+        Label.Size = UDim2.new(1,0,0,20); Label.Text = Config.Name or ""
+        Label.TextColor3 = Settings.TextColor; Label.TextXAlignment = Enum.TextXAlignment.Left
+        Label.Font = Enum.Font.SourceSansBold; Label.TextSize = 16
 
-        local Label = Instance.new("TextLabel")
-        Label.Parent = ColorFrame
-        Label.BackgroundTransparency = 1
-        Label.Position = UDim2.new(0,10,0,5)
-        Label.Size = UDim2.new(1,0,0,20)
-        Label.Text = Config.Name or ""
-        Label.TextColor3 = Settings.TextColor
-        Label.TextXAlignment = Enum.TextXAlignment.Left
-        Label.Font = Enum.Font.SourceSansBold
-        Label.TextSize = 16
-
-        local Preview = Instance.new("Frame")
-        Preview.Parent = ColorFrame
-        Preview.Position = UDim2.new(0,10,0,30)
-        Preview.Size = UDim2.new(0,30,0,30)
+        local Preview = Instance.new("Frame"); Preview.Parent = ColorFrame
+        Preview.Position = UDim2.new(0,10,0,30); Preview.Size = UDim2.new(0,30,0,30)
         Preview.BackgroundColor3 = Config.Color or Color3.new(1,1,1)
         Instance.new("UICorner", Preview).CornerRadius = UDim.new(0,4)
 
-        local SVBox = Instance.new("TextButton")
-        SVBox.Parent = ColorFrame
-        SVBox.Position = UDim2.new(0,60,0,30)
-        SVBox.Size = UDim2.new(0,150,0,100)
-        SVBox.BackgroundColor3 = Color3.new(1,0,0)
-        SVBox.Text = ""
-        local SVGrad = Instance.new("UIGradient")
-        SVGrad.Parent = SVBox
+        local SVBox = Instance.new("TextButton"); SVBox.Parent = ColorFrame
+        SVBox.Position = UDim2.new(0,60,0,30); SVBox.Size = UDim2.new(0,150,0,100)
+        SVBox.BackgroundColor3 = Color3.new(1,0,0); SVBox.Text = ""
+        local SVGrad = Instance.new("UIGradient"); SVGrad.Parent = SVBox
         SVGrad.Color = ColorSequence.new{ColorSequenceKeypoint.new(0,Color3.new(1,1,1)), ColorSequenceKeypoint.new(1,Color3.new(1,0,0))}
-        local SVBlack = Instance.new("ImageLabel")
-        SVBlack.Parent = SVBox
-        SVBlack.Size = UDim2.new(1,0,1,0)
-        SVBlack.Image = "rbxassetid://156579757"
-        SVBlack.BackgroundTransparency = 1
+        local SVBlack = Instance.new("ImageLabel"); SVBlack.Parent = SVBox
+        SVBlack.Size = UDim2.new(1,0,1,0); SVBlack.Image = "rbxassetid://156579757"; SVBlack.BackgroundTransparency = 1
 
-        local HueBar = Instance.new("TextButton")
-        HueBar.Parent = ColorFrame
-        HueBar.Position = UDim2.new(0,60,0,135)
-        HueBar.Size = UDim2.new(0,150,0,15)
-        HueBar.Text = ""
-        local HueGrad = Instance.new("UIGradient")
-        HueGrad.Parent = HueBar
+        local HueBar = Instance.new("TextButton"); HueBar.Parent = ColorFrame
+        HueBar.Position = UDim2.new(0,60,0,135); HueBar.Size = UDim2.new(0,150,0,15); HueBar.Text = ""
+        local HueGrad = Instance.new("UIGradient"); HueGrad.Parent = HueBar
         HueGrad.Color = ColorSequence.new{
             ColorSequenceKeypoint.new(0,     Color3.new(1,0,0)),
             ColorSequenceKeypoint.new(0.167, Color3.new(1,1,0)),
@@ -562,44 +392,28 @@ return function(Ctx)
         }
 
         local function MakeRGBBox(Placeholder, XOffset)
-            local Box = Instance.new("TextBox")
-            Box.Parent = ColorFrame
+            local Box = Instance.new("TextBox"); Box.Parent = ColorFrame
             Box.BackgroundColor3 = Color3.fromRGB(40,40,40)
-            Box.Position = UDim2.new(0,220,0,XOffset)
-            Box.Size = UDim2.new(0,40,0,25)
-            Box.Font = Enum.Font.SourceSans
-            Box.PlaceholderText = Placeholder
-            Box.Text = ""
-            Box.TextColor3 = Color3.new(1,1,1)
-            Box.TextSize = 14
+            Box.Position = UDim2.new(0,220,0,XOffset); Box.Size = UDim2.new(0,40,0,25)
+            Box.Font = Enum.Font.SourceSans; Box.PlaceholderText = Placeholder; Box.Text = ""
+            Box.TextColor3 = Color3.new(1,1,1); Box.TextSize = 14
             Instance.new("UICorner", Box).CornerRadius = UDim.new(0,4)
             return Box
         end
-        local RBox = MakeRGBBox("R", 30)
-        local GBox = MakeRGBBox("G", 60)
-        local BBox = MakeRGBBox("B", 90)
-
-        local HexBox = Instance.new("TextBox")
-        HexBox.Parent = ColorFrame
+        local RBox = MakeRGBBox("R", 30); local GBox = MakeRGBBox("G", 60); local BBox = MakeRGBBox("B", 90)
+        local HexBox = Instance.new("TextBox"); HexBox.Parent = ColorFrame
         HexBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
-        HexBox.Position = UDim2.new(0,220,0,120)
-        HexBox.Size = UDim2.new(0,60,0,25)
-        HexBox.Font = Enum.Font.SourceSans
-        HexBox.PlaceholderText = "#Hex"
-        HexBox.Text = ""
-        HexBox.TextColor3 = Settings.TextColor
-        HexBox.TextSize = 14
+        HexBox.Position = UDim2.new(0,220,0,120); HexBox.Size = UDim2.new(0,60,0,25)
+        HexBox.Font = Enum.Font.SourceSans; HexBox.PlaceholderText = "#Hex"; HexBox.Text = ""
+        HexBox.TextColor3 = Settings.TextColor; HexBox.TextSize = 14
         Instance.new("UICorner", HexBox).CornerRadius = UDim.new(0,4)
 
         local H, S, V = 0, 1, 1
         local function UpdateColor(NewH, NewS, NewV)
             H = NewH or H; S = NewS or S; V = NewV or V
             local Col = Color3.fromHSV(H,S,V)
-            Preview.BackgroundColor3 = Col
-            SVBox.BackgroundColor3 = Color3.fromHSV(H,1,1)
-            RBox.Text = math.floor(Col.R*255)
-            GBox.Text = math.floor(Col.G*255)
-            BBox.Text = math.floor(Col.B*255)
+            Preview.BackgroundColor3 = Col; SVBox.BackgroundColor3 = Color3.fromHSV(H,1,1)
+            RBox.Text = math.floor(Col.R*255); GBox.Text = math.floor(Col.G*255); BBox.Text = math.floor(Col.B*255)
             if Config.Callback then Config.Callback(Col) end
         end
 
@@ -607,13 +421,8 @@ return function(Ctx)
             local dHue, dSV = false, false
             UserInputService.InputChanged:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-                    if dHue then
-                        UpdateColor(math.clamp((input.Position.X - HueBar.AbsolutePosition.X)/HueBar.AbsoluteSize.X, 0, 1), nil, nil)
-                    elseif dSV then
-                        UpdateColor(nil,
-                            math.clamp((input.Position.X - SVBox.AbsolutePosition.X)/SVBox.AbsoluteSize.X, 0, 1),
-                            1 - math.clamp((input.Position.Y - SVBox.AbsolutePosition.Y)/SVBox.AbsoluteSize.Y, 0, 1))
-                    end
+                    if dHue then UpdateColor(math.clamp((input.Position.X - HueBar.AbsolutePosition.X)/HueBar.AbsoluteSize.X, 0, 1), nil, nil)
+                    elseif dSV then UpdateColor(nil, math.clamp((input.Position.X - SVBox.AbsolutePosition.X)/SVBox.AbsoluteSize.X, 0, 1), 1 - math.clamp((input.Position.Y - SVBox.AbsolutePosition.Y)/SVBox.AbsoluteSize.Y, 0, 1)) end
                 end
             end)
             HueBar.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dHue=true end end)
@@ -640,10 +449,10 @@ return function(Ctx)
     -- ============================================================
     function Reg.Dropdown(Page, Config)
         local ReturnedTable = {}
-        local DropdownFrame = Instance.new("Frame")
-        DropdownFrame.Parent = Page
+        local DropdownFrame = Instance.new("Frame"); DropdownFrame.Parent = Page
         DropdownFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
         DropdownFrame.Size = UDim2.new(1,-10,0,35)
+        DropdownFrame.LayoutOrder = NextLayoutOrder(Page)
         DropdownFrame.ClipsDescendants = true
         Instance.new("UICorner", DropdownFrame).CornerRadius = UDim.new(0,6)
         DropdownFrame:SetAttribute("SearchName", string.lower(Config.Name or ""))
@@ -653,51 +462,32 @@ return function(Ctx)
         local Options = Config.Options or {}
         local CurrentOption = Config.CurrentOption or Options[1] or "Sélectionner..."
 
-        local MainBtn = Instance.new("TextButton")
-        MainBtn.Parent = DropdownFrame
-        MainBtn.BackgroundTransparency = 1
-        MainBtn.Size = UDim2.new(1,0,0,35)
+        local MainBtn = Instance.new("TextButton"); MainBtn.Parent = DropdownFrame
+        MainBtn.BackgroundTransparency = 1; MainBtn.Size = UDim2.new(1,0,0,35)
         MainBtn.Font = Enum.Font.SourceSans
         MainBtn.Text = "  " .. (Config.Name or "") .. ": " .. CurrentOption
-        MainBtn.TextColor3 = Color3.new(1,1,1)
-        MainBtn.TextSize = 16
-        MainBtn.TextXAlignment = Enum.TextXAlignment.Left
+        MainBtn.TextColor3 = Color3.new(1,1,1); MainBtn.TextSize = 16; MainBtn.TextXAlignment = Enum.TextXAlignment.Left
 
-        local ArrowIcon = Instance.new("ImageLabel")
-        ArrowIcon.Parent = MainBtn
-        ArrowIcon.BackgroundTransparency = 1
-        ArrowIcon.Position = UDim2.new(1,-30,0,7)
-        ArrowIcon.Size = UDim2.new(0,20,0,20)
-        ArrowIcon.Image = "rbxassetid://6034818372"
+        local ArrowIcon = Instance.new("ImageLabel"); ArrowIcon.Parent = MainBtn
+        ArrowIcon.BackgroundTransparency = 1; ArrowIcon.Position = UDim2.new(1,-30,0,7)
+        ArrowIcon.Size = UDim2.new(0,20,0,20); ArrowIcon.Image = "rbxassetid://6034818372"
 
-        local OptionsContainer = Instance.new("Frame")
-        OptionsContainer.Parent = DropdownFrame
-        OptionsContainer.BackgroundTransparency = 1
-        OptionsContainer.Position = UDim2.new(0,0,0,35)
-        OptionsContainer.Size = UDim2.new(1,0,0,0)
-        OptionsContainer.Visible = false
+        local OptionsContainer = Instance.new("Frame"); OptionsContainer.Parent = DropdownFrame
+        OptionsContainer.BackgroundTransparency = 1; OptionsContainer.Position = UDim2.new(0,0,0,35)
+        OptionsContainer.Size = UDim2.new(1,0,0,0); OptionsContainer.Visible = false
         Instance.new("UIListLayout", OptionsContainer).SortOrder = Enum.SortOrder.LayoutOrder
 
         local function RefreshOptions(NewList)
-            for _, v in pairs(OptionsContainer:GetChildren()) do
-                if v:IsA("TextButton") then v:Destroy() end
-            end
+            for _, v in pairs(OptionsContainer:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
             Options = NewList
             for _, option in ipairs(Options) do
-                local OptBtn = Instance.new("TextButton")
-                OptBtn.Parent = OptionsContainer
-                OptBtn.BackgroundColor3 = Color3.fromRGB(35,35,35)
-                OptBtn.Size = UDim2.new(1,0,0,30)
-                OptBtn.Text = "  " .. option
-                OptBtn.TextColor3 = Settings.TextColor
-                OptBtn.TextXAlignment = Enum.TextXAlignment.Left
-                OptBtn.Font = Enum.Font.SourceSans
-                OptBtn.TextSize = 15
+                local OptBtn = Instance.new("TextButton"); OptBtn.Parent = OptionsContainer
+                OptBtn.BackgroundColor3 = Color3.fromRGB(35,35,35); OptBtn.Size = UDim2.new(1,0,0,30)
+                OptBtn.Text = "  " .. option; OptBtn.TextColor3 = Settings.TextColor
+                OptBtn.TextXAlignment = Enum.TextXAlignment.Left; OptBtn.Font = Enum.Font.SourceSans; OptBtn.TextSize = 15
                 OptBtn.MouseButton1Click:Connect(function()
-                    CurrentOption = option
-                    MainBtn.Text = "  " .. (Config.Name or "") .. ": " .. option
-                    DropdownOpen = false
-                    TweenService:Create(ArrowIcon, TweenInfo.new(0.2), {Rotation=0}):Play()
+                    CurrentOption = option; MainBtn.Text = "  " .. (Config.Name or "") .. ": " .. option
+                    DropdownOpen = false; TweenService:Create(ArrowIcon, TweenInfo.new(0.2), {Rotation=0}):Play()
                     local ct = TweenService:Create(DropdownFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size=UDim2.new(1,-10,0,35)})
                     ct:Play(); ct.Completed:Wait(); OptionsContainer.Visible=false
                     if Config.Callback then Config.Callback(option) end
@@ -719,15 +509,10 @@ return function(Ctx)
                     ct:Play(); ct.Completed:Wait(); OptionsContainer.Visible=false
                 end
             end)
-        else
-            MainBtn.Active = false
-        end
+        else MainBtn.Active = false end
 
         function ReturnedTable:Refresh(List) RefreshOptions(List) end
-        function ReturnedTable:Set(Option)
-            CurrentOption = Option
-            MainBtn.Text = "  " .. (Config.Name or "") .. ": " .. Option
-        end
+        function ReturnedTable:Set(Option) CurrentOption = Option; MainBtn.Text = "  " .. (Config.Name or "") .. ": " .. Option end
         return ReturnedTable
     end
 
@@ -735,49 +520,32 @@ return function(Ctx)
     -- SLIDER
     -- ============================================================
     function Reg.Slider(Page, Config)
-        local SliderFrame = Instance.new("Frame")
-        SliderFrame.Parent = Page
-        SliderFrame.BackgroundTransparency = 1
-        SliderFrame.Size = UDim2.new(1,-10,0,50)
+        local SliderFrame = Instance.new("Frame"); SliderFrame.Parent = Page
+        SliderFrame.BackgroundTransparency = 1; SliderFrame.Size = UDim2.new(1,-10,0,50)
+        SliderFrame.LayoutOrder = NextLayoutOrder(Page)
         SliderFrame:SetAttribute("SearchName", string.lower(Config.Name or ""))
 
         local Locked = ApplyLock(SliderFrame, Config)
+        local Label = Instance.new("TextLabel"); Label.Parent = SliderFrame
+        Label.BackgroundTransparency = 1; Label.Position = UDim2.new(0,10,0,0)
+        Label.Size = UDim2.new(1,0,0,20); Label.Text = Config.Name or ""
+        Label.TextColor3 = Color3.new(1,1,1); Label.TextXAlignment = Enum.TextXAlignment.Left
+        Label.Font = Enum.Font.SourceSans; Label.TextSize = 16
 
-        local Label = Instance.new("TextLabel")
-        Label.Parent = SliderFrame
-        Label.BackgroundTransparency = 1
-        Label.Position = UDim2.new(0,10,0,0)
-        Label.Size = UDim2.new(1,0,0,20)
-        Label.Text = Config.Name or ""
-        Label.TextColor3 = Color3.new(1,1,1)
-        Label.TextXAlignment = Enum.TextXAlignment.Left
-        Label.Font = Enum.Font.SourceSans
-        Label.TextSize = 16
-
-        local ValLabel = Instance.new("TextLabel")
-        ValLabel.Parent = SliderFrame
-        ValLabel.BackgroundTransparency = 1
-        ValLabel.Position = UDim2.new(1,-60,0,0)
-        ValLabel.Size = UDim2.new(0,50,0,20)
-        ValLabel.TextColor3 = Color3.new(1,1,1)
+        local ValLabel = Instance.new("TextLabel"); ValLabel.Parent = SliderFrame
+        ValLabel.BackgroundTransparency = 1; ValLabel.Position = UDim2.new(1,-60,0,0)
+        ValLabel.Size = UDim2.new(0,50,0,20); ValLabel.TextColor3 = Color3.new(1,1,1)
         ValLabel.TextXAlignment = Enum.TextXAlignment.Right
-        ValLabel.Font = Enum.Font.SourceSansBold
-        ValLabel.TextSize = 16
+        ValLabel.Font = Enum.Font.SourceSansBold; ValLabel.TextSize = 16
 
-        local Bar = Instance.new("Frame")
-        Bar.Parent = SliderFrame
+        local Bar = Instance.new("Frame"); Bar.Parent = SliderFrame
         Bar.BackgroundColor3 = Color3.fromRGB(10,10,10)
-        Bar.Position = UDim2.new(0,10,0,25)
-        Bar.Size = UDim2.new(1,-20,0,10)
+        Bar.Position = UDim2.new(0,10,0,25); Bar.Size = UDim2.new(1,-20,0,10)
         Instance.new("UICorner", Bar).CornerRadius = UDim.new(1,0)
 
-        local Knob = Instance.new("TextButton")
-        Knob.Parent = Bar
-        Knob.BackgroundColor3 = Settings.AccentColor
-        Knob.Size = UDim2.new(0,20,0,20)
-        Knob.AnchorPoint = Vector2.new(0.5,0.5)
-        Knob.Position = UDim2.new(0,0,0.5,0)
-        Knob.Text = ""
+        local Knob = Instance.new("TextButton"); Knob.Parent = Bar
+        Knob.BackgroundColor3 = Settings.AccentColor; Knob.Size = UDim2.new(0,20,0,20)
+        Knob.AnchorPoint = Vector2.new(0.5,0.5); Knob.Position = UDim2.new(0,0,0.5,0); Knob.Text = ""
         Instance.new("UICorner", Knob).CornerRadius = UDim.new(1,0)
 
         local Min, Max = Config.Range[1] or 0, Config.Range[2] or 100
@@ -799,9 +567,7 @@ return function(Ctx)
                     if Config.Callback then Config.Callback(Val) end
                 end
             end)
-        else
-            Knob.Active = false
-        end
+        else Knob.Active = false end
 
         function SliderObj:Set(Value)
             local P = (Value-Min)/(Max-Min)
@@ -810,6 +576,117 @@ return function(Ctx)
             if Config.Callback then Config.Callback(Value) end
         end
         return SliderObj
+    end
+
+    -- ============================================================
+    -- ★ NOUVEAU : CODEBLOCK
+    -- Boîte pleine largeur, fond noir semi-transparent (50%),
+    -- contour noir, texte à gauche, bouton COPIER en haut à droite.
+    -- Copie le texte dans le presse-papier au clic.
+    -- S'adapte à la largeur de la fenêtre.
+    --
+    -- Utilisation :
+    --   Tab:CreateCodeBlock({
+    --       Text = "local x = 1 + 1",
+    --       -- optionnel :
+    --       Name = "Exemple de code",   -- label au-dessus (si nil, pas de label)
+    --   })
+    -- ============================================================
+    function Reg.CodeBlock(Page, Config)
+        local ReturnedTable = {}
+        Config = Config or {}
+
+        local BLOCK_HEIGHT = 60
+
+        local Wrapper = Instance.new("Frame"); Wrapper.Parent = Page
+        Wrapper.BackgroundTransparency = 1
+        Wrapper.Size = UDim2.new(1, -10, 0, BLOCK_HEIGHT)
+        Wrapper.LayoutOrder = NextLayoutOrder(Page)
+        Wrapper:SetAttribute("SearchName", string.lower(Config.Name or Config.Text or ""))
+
+        -- Fond principal : pleine largeur, semi-transparent, contour noir
+        local Block = Instance.new("Frame"); Block.Parent = Wrapper
+        Block.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        Block.BackgroundTransparency = 0.5
+        Block.Size = UDim2.new(1, 0, 1, 0)
+        Block.BorderSizePixel = 0
+        local BlockCorner = Instance.new("UICorner"); BlockCorner.Parent = Block
+        BlockCorner.CornerRadius = UDim.new(0, 6)
+        local BlockStroke = Instance.new("UIStroke"); BlockStroke.Parent = Block
+        BlockStroke.Color = Color3.fromRGB(0, 0, 0)
+        BlockStroke.Thickness = 1.5
+        BlockStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+        -- Zone de texte (lecture seule, pleine largeur sauf 40px pour le bouton)
+        local CodeText = Instance.new("TextLabel"); CodeText.Parent = Block
+        CodeText.BackgroundTransparency = 1
+        CodeText.Position = UDim2.new(0, 10, 0, 0)
+        CodeText.Size = UDim2.new(1, -50, 1, 0)
+        CodeText.Text = Config.Text or ""
+        CodeText.TextColor3 = Color3.fromRGB(220, 220, 220)
+        CodeText.Font = Enum.Font.Code
+        CodeText.TextSize = 13
+        CodeText.TextXAlignment = Enum.TextXAlignment.Left
+        CodeText.TextYAlignment = Enum.TextYAlignment.Center
+        CodeText.TextWrapped = true
+        CodeText.RichText = false
+
+        -- Bouton copier en haut à droite
+        local CopyBtn = Instance.new("TextButton"); CopyBtn.Parent = Block
+        CopyBtn.AnchorPoint = Vector2.new(1, 0.5)
+        CopyBtn.Position = UDim2.new(1, -6, 0.5, 0)
+        CopyBtn.Size = UDim2.new(0, 32, 0, 32)
+        CopyBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        CopyBtn.BackgroundTransparency = 0.3
+        CopyBtn.Text = ""
+        CopyBtn.ZIndex = 5
+        Instance.new("UICorner", CopyBtn).CornerRadius = UDim.new(0, 6)
+
+        -- Icône copier (image)
+        local CopyIcon = Instance.new("ImageLabel"); CopyIcon.Parent = CopyBtn
+        CopyIcon.BackgroundTransparency = 1
+        CopyIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+        CopyIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
+        CopyIcon.Size = UDim2.new(0, 20, 0, 20)
+        CopyIcon.Image = "rbxassetid://3610239960" -- icône copie/clipboard standard Roblox
+        CopyIcon.ImageColor3 = Color3.fromRGB(200, 200, 200)
+        CopyIcon.ZIndex = 6
+
+        -- Feedback visuel après copie
+        local function FlashCopied()
+            TweenService:Create(CopyBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(0, 100, 50)}):Play()
+            CopyIcon.ImageColor3 = Color3.fromRGB(100, 255, 150)
+            task.wait(1.2)
+            TweenService:Create(CopyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}):Play()
+            CopyIcon.ImageColor3 = Color3.fromRGB(200, 200, 200)
+        end
+
+        CopyBtn.MouseButton1Click:Connect(function()
+            local txt = CodeText.Text
+            local copied = false
+            if setclipboard then pcall(function() setclipboard(txt); copied = true end) end
+            if not copied and toclipboard then pcall(function() toclipboard(txt); copied = true end) end
+            if not copied and Clipboard then pcall(function() Clipboard.set(txt); copied = true end) end
+            task.spawn(FlashCopied)
+        end)
+
+        -- Survol du bouton copier
+        CopyBtn.MouseEnter:Connect(function()
+            TweenService:Create(CopyBtn, TweenInfo.new(0.1), {BackgroundTransparency = 0}):Play()
+        end)
+        CopyBtn.MouseLeave:Connect(function()
+            TweenService:Create(CopyBtn, TweenInfo.new(0.1), {BackgroundTransparency = 0.3}):Play()
+        end)
+
+        function ReturnedTable:Set(NewText)
+            CodeText.Text = NewText
+            Wrapper:SetAttribute("SearchName", string.lower(NewText))
+        end
+        function ReturnedTable:GetText()
+            return CodeText.Text
+        end
+
+        return ReturnedTable
     end
 
     return Reg
